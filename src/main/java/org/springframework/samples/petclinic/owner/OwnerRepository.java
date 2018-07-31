@@ -58,6 +58,18 @@ public interface OwnerRepository extends Repository<Owner, Integer> {
      * @param owner the {@link Owner} to save
      */
     void save(Owner owner);
+    
+    @Query("SELECT owner FROM Owner owner WHERE owner.email =:email or owner.password =:password")
+    @Transactional(readOnly = true)
+	Collection<Owner> findvalue(@Param("email") String email, String password);
+    
+//    @Query("SELECT owner FROM Owner owner WHERE owner.password =:password ")
+//    @Transactional(readOnly = true)
+//	Collection<Owner> findpass(@Param("password")String password);
+
+    @Query("SELECT owner FROM Owner owner WHERE owner.email =:email AND owner.password =:password ")
+    @Transactional(readOnly = true)
+	Collection<Owner> findLogin(@Param("email") String email, String password);
 
 
 }

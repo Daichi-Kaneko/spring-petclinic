@@ -24,15 +24,26 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
+import org.hibernate.validator.constraints.UniqueElements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PropertyComparator;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.samples.petclinic.model.Person;
+import org.springframework.validation.annotation.Validated;
+
+import com.fasterxml.jackson.annotation.JsonFormat.Value;
 
 /**
  * Simple JavaBean domain object representing an owner.
@@ -42,111 +53,142 @@ import org.springframework.samples.petclinic.model.Person;
  * @author Sam Brannen
  * @author Michael Isvy
  */
+
 @Entity
 @Table(name = "owners")
 public class Owner extends Person {
-    @Column(name = "address")
-    @NotEmpty
-    private String address;
 
-    @Column(name = "city")
-    @NotEmpty
-    private String city;
+	@Column(name = "address")
+	@NotEmpty
+	private String address;
 
-    @Column(name = "telephone")
-    @NotEmpty
-    @Digits(fraction = 0, integer = 10)
-    private String telephone;
+	@Column(name = "city")
+	@NotEmpty
+	private String city;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner")
-    private Set<Pet> pets;
+	@Column(name = "telephone")
+	@NotEmpty
+	@Digits(fraction = 0, integer = 10)
+	private String telephone;
 
-    public String getAddress() {
-        return this.address;
-    }
+	@Column(name = "email")
+	@NotEmpty
+	@Email
+	private String email;
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
+	@Column(name = "password")
+	@NotEmpty
+	@Size(min = 8)
+	@Pattern(regexp="^[a-zA-Z0-9]+$")
+	private String password;
+	
 
-    public String getCity() {
-        return this.city;
-    }
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "owner")
+	private Set<Pet> pets;
 
-    public void setCity(String city) {
-        this.city = city;
-    }
+	public String getAddress() {
+		return this.address;
+	}
 
-    public String getTelephone() {
-        return this.telephone;
-    }
+	public void setAddress(String address) {
+		this.address = address;
+	}
 
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
+	public String getCity() {
+		return this.city;
+	}
 
-    protected Set<Pet> getPetsInternal() {
-        if (this.pets == null) {
-            this.pets = new HashSet<>();
-        }
-        return this.pets;
-    }
+	public void setCity(String city) {
+		this.city = city;
+	}
 
-    protected void setPetsInternal(Set<Pet> pets) {
-        this.pets = pets;
-    }
+	public String getTelephone() {
+		return this.telephone;
+	}
 
-    public List<Pet> getPets() {
-        List<Pet> sortedPets = new ArrayList<>(getPetsInternal());
-        PropertyComparator.sort(sortedPets,
-                new MutableSortDefinition("name", true, true));
-        return Collections.unmodifiableList(sortedPets);
-    }
+	public void setTelephone(String telephone) {
+		this.telephone = telephone;
+	}
 
-    public void addPet(Pet pet) {
-        if (pet.isNew()) {
-            getPetsInternal().add(pet);
-        }
-        pet.setOwner(this);
-    }
+	public String getEmail() {
+		return this.email;
+	}
 
-    /**
-     * Return the Pet with the given name, or null if none found for this Owner.
-     *
-     * @param name to test
-     * @return true if pet name is already in use
-     */
-    public Pet getPet(String name) {
-        return getPet(name, false);
-    }
+	public void setEmail(String email) {
+		this.email = email;
+	}
 
-    /**
-     * Return the Pet with the given name, or null if none found for this Owner.
-     *
-     * @param name to test
-     * @return true if pet name is already in use
-     */
-    public Pet getPet(String name, boolean ignoreNew) {
-        name = name.toLowerCase();
-        for (Pet pet : getPetsInternal()) {
-            if (!ignoreNew || !pet.isNew()) {
-                String compName = pet.getName();
-                compName = compName.toLowerCase();
-                if (compName.equals(name)) {
-                    return pet;
-                }
-            }
-        }
-        return null;
-    }
+	public String getPassword() {
+		//password= passwordEncoder.encode(password);
+		
+		return this.password;
+	}
 
-    @Override
-    public String toString() {
-        return new ToStringCreator(this)
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
-                .append("id", this.getId()).append("new", this.isNew())
-                .append("lastName", this.getLastName())
-                .append("firstName", this.getFirstName()).append("address", this.address)
-                .append("city", this.city).append("telephone", this.telephone).toString();
-    }
+	protected Set<Pet> getPetsInternal() {
+		if (this.pets == null) {
+			this.pets = new HashSet<>();
+		}
+		return this.pets;
+	}
+
+	protected void setPetsInternal(Set<Pet> pets) {
+		this.pets = pets;
+	}
+
+	public List<Pet> getPets() {
+		List<Pet> sortedPets = new ArrayList<>(getPetsInternal());
+		PropertyComparator.sort(sortedPets, new MutableSortDefinition("name", true, true));
+		return Collections.unmodifiableList(sortedPets);
+	}
+
+	public void addPet(Pet pet) {
+		if (pet.isNew()) {
+			getPetsInternal().add(pet);
+		}
+		pet.setOwner(this);
+	}
+
+	/**
+	 * Return the Pet with the given name, or null if none found for this Owner.
+	 *
+	 * @param name to test
+	 * @return true if pet name is already in use
+	 */
+	public Pet getPet(String name) {
+		return getPet(name, false);
+	}
+
+	/**
+	 * Return the Pet with the given name, or null if none found for this Owner.
+	 *
+	 * @param name to test
+	 * @return true if pet name is already in use
+	 */
+	public Pet getPet(String name, boolean ignoreNew) {
+		name = name.toLowerCase();
+		for (Pet pet : getPetsInternal()) {
+			if (!ignoreNew || !pet.isNew()) {
+				String compName = pet.getName();
+				compName = compName.toLowerCase();
+				if (compName.equals(name)) {
+					return pet;
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringCreator(this)
+
+				.append("id", this.getId()).append("new", this.isNew()).append("lastName", this.getLastName())
+				.append("firstName", this.getFirstName()).append("address", this.address).append("city", this.city)
+				.append("telephone", this.telephone).append("email", this.email).append("password", this.password)
+				.toString();
+	}
 }
