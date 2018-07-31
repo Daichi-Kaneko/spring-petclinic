@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import javax.validation.constraints.Max;
+
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,6 +71,8 @@ public class OwnerControllerTests {
             .param("address", "123 Caramel Street")
             .param("city", "London")
             .param("telephone", "01316761638")
+            .param("email", "22@email.com")
+            .param("password", "1212")
         )
             .andExpect(status().is3xxRedirection());
     }
@@ -145,6 +149,8 @@ public class OwnerControllerTests {
             .param("address", "123 Caramel Street")
             .param("city", "London")
             .param("telephone", "01616291589")
+            .param("email", "22@email.com")
+            .param("password", "1212")
         )
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/{ownerId}"));
@@ -175,5 +181,50 @@ public class OwnerControllerTests {
             .andExpect(model().attribute("owner", hasProperty("telephone", is("6085551023"))))
             .andExpect(view().name("owners/ownerDetails"));
     }
-
+    
+    @Test
+    public void 日本語入力テストエラー版() throws Exception{
+    	mockMvc.perform(post("/owners/new")
+//                .param("firstName", "Joe")
+//                .param("lastName", "Bloggs")
+//                .param("city", "London")
+            )
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasErrors("owner"))
+                .andExpect(model().attributeHasFieldErrors("owner", "firstName"))
+                .andExpect(model().attributeHasFieldErrors("owner", "lastName"))
+                .andExpect(model().attributeHasFieldErrors("owner", "city"))
+                .andExpect(model().attributeHasFieldErrors("owner", "address"))
+                .andExpect(model().attributeHasFieldErrors("owner", "telephone"))
+                .andExpect(view().name("owners/createOrUpdateOwnerForm"));
+        }
+    
+    @Test
+    public void 日本語入力テスト() throws Exception{
+        mockMvc.perform(post("/owners/new")
+                .param("firstName", "太地")
+                .param("lastName", "金子")
+                .param("address", "千代田区神田須田町2-3-1 NBF神田須田町ビル6階")
+                .param("city", "東京都")
+                .param("telephone", "038876009")
+                .param("email", "22@email.com")
+                .param("password", "1212")
+            )
+                .andExpect(status().is3xxRedirection());
+        }
+    
+    @Test
+    public void Loginチェック() throws Exception{
+    	mockMvc.perform(post("/login")
+    			.param("email", "Franklin")
+    			.param("password", "1234")
+    			)
+        .andExpect(model().attributeHasFieldErrors("owner", "email"))
+        .andExpect(model().attributeHasFieldErrorCode("owner", "email", "loginerr"))
+        .andExpect(view().name("/login"));
+    }
+    
+    
+    
+    
 }
